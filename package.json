@@ -1,0 +1,16 @@
+{
+  "name": "skanda-six-faces",
+  "version": "1.0.0",
+  "description": "Skanda: The Six Faces — a 3D browser game retelling the life of Lord Murugan, built with Three.js.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "python3 -m http.server 8080 --bind 127.0.0.1",
+    "start:npx": "npx --yes serve -l 8080 .",
+    "test:smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.1"
+  },
+  "license": "MIT"
+}

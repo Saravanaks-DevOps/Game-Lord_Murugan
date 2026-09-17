@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Skanda: The Six Faces — Life of Lord Murugan</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M32 4 L44 34 L32 62 L20 34 Z' fill='%23f2c14e'/><rect x='30' y='30' width='4' height='30' fill='%23c9962b'/></svg>" />
+<link rel="stylesheet" href="src/style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.module.js",
+    "three/addons/": "./vendor/three/addons/"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="chapter-label"></div>
+  <div id="objective"></div>
+  <div id="counter"></div>
+  <div id="health-wrap" class="hidden"><div id="health"></div></div>
+  <div id="timer" class="hidden"></div>
+  <div id="crosshair" class="hidden"></div>
+  <div id="hint"></div>
+</div>
+
+<div id="dialogue" class="hidden">
+  <div id="dialogue-speaker"></div>
+  <div id="dialogue-text"></div>
+  <div id="dialogue-next">▶ continue</div>
+</div>
+
+<div id="quiz" class="hidden">
+  <div id="quiz-q"></div>
+  <div id="quiz-options"></div>
+</div>
+
+<div id="overlay">
+  <div id="title-screen" class="panel">
+    <div class="vel-emblem"></div>
+    <h1>SKANDA</h1>
+    <h2>The Six Faces of Murugan</h2>
+    <p class="sub">An interactive retelling of the life of Lord Murugan — Karthikeya, Shanmukha, Subrahmanya —<br/>from the sparks of Shiva's third eye to the six holy abodes of Tamil Nadu.</p>
+    <div class="menu">
+      <button id="btn-start" class="primary">Begin the Story</button>
+      <button id="btn-chapters">Chapters</button>
+      <button id="btn-quality">Quality: Ultra</button>
+    </div>
+    <p class="controls">
+      <b>W A S D</b> move &nbsp;·&nbsp; <b>Mouse drag</b> look &nbsp;·&nbsp; <b>Space</b> jump / ascend &nbsp;·&nbsp; <b>Shift</b> sprint / descend &nbsp;·&nbsp; <b>Click / F</b> throw the Vel &nbsp;·&nbsp; <b>E</b> interact &nbsp;·&nbsp; <b>Esc</b> menu
+    </p>
+    <p class="loading" id="loading">Kindling the sacred fire…</p>
+  </div>
+
+  <div id="chapter-screen" class="panel hidden">
+    <h2>Arupadai — Six Chapters</h2>
+    <div id="chapter-list"></div>
+    <button id="btn-back">Back</button>
+  </div>
+
+  <div id="card-screen" class="panel hidden">
+    <div class="card-place" id="card-place"></div>
+    <h1 id="card-title"></h1>
+    <div id="card-story"></div>
+    <div class="card-objective" id="card-objective"></div>
+    <button id="btn-card-go" class="primary">Enter</button>
+  </div>
+
+  <div id="pause-screen" class="panel hidden">
+    <h2>Paused</h2>
+    <div class="menu">
+      <button id="btn-resume" class="primary">Resume</button>
+      <button id="btn-restart">Restart chapter</button>
+      <button id="btn-menu">Main menu</button>
+    </div>
+  </div>
+
+  <div id="end-screen" class="panel hidden">
+    <h2>Chapter complete</h2>
+    <div id="end-text"></div>
+    <button id="btn-next" class="primary">Next chapter</button>
+    <button id="btn-end-menu">Main menu</button>
+  </div>
+</div>
+
+<div id="fade"></div>
+<div id="error-box" class="hidden"></div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
