@@ -67,6 +67,7 @@ scripts/smoke.mjs          headless Playwright smoke test that loads every chapt
 npm install            # installs playwright (dev only)
 npm start &            # serve on :8080
 npm run test:smoke     # boots Chromium headless, loads all six chapters, reports console errors
+npm run test:flow      # plays every chapter to its end screen through the chapters' debug hooks
 ```
 
 ## Sources

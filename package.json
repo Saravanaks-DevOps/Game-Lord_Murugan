@@ -7,7 +7,8 @@
   "scripts": {
     "start": "python3 -m http.server 8080 --bind 127.0.0.1",
     "start:npx": "npx --yes serve -l 8080 .",
-    "test:smoke": "node scripts/smoke.mjs"
+    "test:smoke": "node scripts/smoke.mjs",
+    "test:flow": "for i in 0 1 2 3 4 5; do node scripts/flow.mjs $i || exit 1; done"
   },
   "devDependencies": {
     "playwright": "^1.49.1"
