@@ -6,6 +6,7 @@ import { Audio } from './engine/audio.js';
 import { UI } from './engine/ui.js';
 import { STORY } from './story.js';
 import { cleanup } from './chapters/base.js';
+import { preloadModels } from './world/models.js';
 
 const CHAPTERS = [
   () => import('./chapters/ch1_birth.js'),
@@ -41,7 +42,8 @@ class Game {
     this.current = null; this.chapterIndex = -1; this.paused = false; this.time = 0;
     this.progress = store.get('progress', []);
     this._bindMenus();
-    this.ui.el.loading.textContent = '';
+    this.ui.el.loading.textContent = 'Looking for character models…';
+    preloadModels().then((r) => { this.ui.el.loading.textContent = r.models.length ? `Real models: ${r.models.join(', ')}` : ''; }).catch(() => { this.ui.el.loading.textContent = ''; });
     this.ui.showPanel('title');
     this.ui.fade(false);
     this._loop();

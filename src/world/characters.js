@@ -3,6 +3,7 @@
 // simple joint hierarchy so it can be animated procedurally.
 import * as THREE from 'three';
 import * as TX from '../engine/textures.js';
+import { hasModel, createModelRig, faceRef } from './models.js';
 
 const MAT = {
   gold: () => new THREE.MeshPhysicalMaterial({ map: TX.goldTexture(), color: 0xffd76a, metalness: 1, roughness: 0.22, clearcoat: 0.8, clearcoatRoughness: 0.2 }),
@@ -107,6 +108,26 @@ export function createHumanoid(opts = {}) {
     // nose & lips
     mesh(new THREE.ConeGeometry(0.02 * S, 0.06 * S, 6), skin, f, [0, 0.13 * S, 0.17 * S], false).rotation.x = Math.PI / 2;
     mesh(new THREE.TorusGeometry(0.03 * S, 0.008 * S, 6, 12, Math.PI), new THREE.MeshStandardMaterial({ color: 0x8c3a2e }), f, [0, 0.085 * S, 0.155 * S], false).rotation.set(Math.PI, 0, 0);
+    // reference photo projected as a soft oval decal (interim realism upgrade)
+    if (o.faceRef) {
+      const c = document.createElement('canvas'); c.width = c.height = 512;
+      const cx = c.getContext('2d');
+      const img = o.faceRef.image;
+      if (img && img.width) {
+        const ar = img.width / img.height;
+        const w = ar >= 1 ? 512 : 512 * ar, hh = ar >= 1 ? 512 / ar : 512;
+        cx.drawImage(img, (512 - w) / 2, (512 - hh) / 2, w, hh);
+        cx.globalCompositeOperation = 'destination-in';
+        const g = cx.createRadialGradient(256, 256, 120, 256, 256, 250);
+        g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+        cx.fillStyle = g; cx.fillRect(0, 0, 512, 512);
+        const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+        const plate = new THREE.Mesh(new THREE.SphereGeometry(0.176 * S, 24, 18, Math.PI * 0.62, Math.PI * 0.76, Math.PI * 0.22, Math.PI * 0.58), new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.6, depthWrite: false }));
+        plate.position.set(0, 0.14 * S, 0); plate.scale.set(0.92, 1.08, 0.95); plate.rotation.y = -Math.PI / 2;
+        f.add(plate);
+        return f;
+      }
+    }
     // forehead marks
     if (o.tilak === 'vibhuti') for (let i = 0; i < 3; i++) mesh(new THREE.BoxGeometry(0.11 * S, 0.008 * S, 0.01 * S), new THREE.MeshStandardMaterial({ color: 0xf5f0e0 }), f, [0, (0.21 + i * 0.018) * S, 0.163 * S], false);
     if (o.tilak === 'kumkum' || o.tilak === 'vibhuti') mesh(new THREE.SphereGeometry(0.012 * S, 6, 6), new THREE.MeshStandardMaterial({ color: 0xd11f1f, emissive: 0x500000 }), f, [0, 0.205 * S, 0.165 * S], false);
@@ -252,21 +273,28 @@ export function createHumanoid(opts = {}) {
 }
 
 /* -------------------------------------------------------------- presets */
+const MODEL_HEIGHT = { murugan: 2.0, parvati: 1.85, shiva: 2.1, ganesha: 1.9, valli: 1.7, deivanai: 1.75, surapadman: 5.2, asura: 2.5, brahma: 1.9 };
+/** Real model if one is present in assets/characters/, otherwise the procedural rig. */
+const modelOr = (name, fallback, size = 1, opts = {}) => {
+  if (hasModel(name)) { const r = createModelRig(name, { height: MODEL_HEIGHT[name] ?? 2, size, opts }); if (r) return r; }
+  return fallback({ faceRef: faceRef(name) });
+};
+
 export const Characters = {
-  murugan: (extra = {}) => createHumanoid({ skin: [236, 186, 110], garment: [190, 22, 22], crown: 'tall', hair: 'tied', tilak: 'vibhuti', muscles: 1.05, ...extra }),
+  murugan: (extra = {}) => modelOr('murugan', (m) => createHumanoid({ skin: [236, 186, 110], garment: [190, 22, 22], crown: 'tall', hair: 'tied', tilak: 'vibhuti', muscles: 1.05, ...m, ...extra })),
   muruganChild: () => createHumanoid({ skin: [240, 195, 120], garment: [200, 40, 40], crown: 'gold', hair: 'tied', size: 0.62, muscles: 0.9 }),
   shanmukha: () => createHumanoid({ skin: [236, 186, 110], garment: [190, 22, 22], crown: 'tall', hair: 'tied', arms: 6, muscles: 1.05 }),
-  parvati: () => createHumanoid({ skin: [225, 165, 110], garment: [30, 140, 60], upperGarment: [200, 30, 60], crown: 'gold', hair: 'long', female: true, tilak: 'kumkum' }),
-  shiva: () => createHumanoid({ skin: [200, 205, 215], garment: [190, 120, 50], crown: 'none', hair: 'jata', thirdEye: true, blueThroat: true, moon: true, muscles: 1.15, tilak: 'vibhuti' }),
-  brahma: () => createHumanoid({ skin: [230, 190, 140], garment: [240, 220, 190], crown: 'gold', hair: 'tied', beard: true, fourFaces: true, arms: 2 }),
-  ganesha: () => createHumanoid({ skin: [225, 170, 110], garment: [220, 160, 30], crown: 'gold', hair: 'none', elephantHead: true, muscles: 1.45, size: 0.95, tilak: 'none' }),
+  parvati: () => modelOr('parvati', (m) => createHumanoid({ ...m, skin: [225, 165, 110], garment: [30, 140, 60], upperGarment: [200, 30, 60], crown: 'gold', hair: 'long', female: true, tilak: 'kumkum' })),
+  shiva: () => modelOr('shiva', (m) => createHumanoid({ ...m, skin: [200, 205, 215], garment: [190, 120, 50], crown: 'none', hair: 'jata', thirdEye: true, blueThroat: true, moon: true, muscles: 1.15, tilak: 'vibhuti' })),
+  brahma: () => modelOr('brahma', (m) => createHumanoid({ ...m, skin: [230, 190, 140], garment: [240, 220, 190], crown: 'gold', hair: 'tied', beard: true, fourFaces: true, arms: 2 })),
+  ganesha: () => modelOr('ganesha', (m) => createHumanoid({ ...m, skin: [225, 170, 110], garment: [220, 160, 30], crown: 'gold', hair: 'none', elephantHead: true, muscles: 1.45, size: 0.95, tilak: 'none' })),
   narada: () => createHumanoid({ skin: [230, 200, 150], garment: [250, 245, 230], crown: 'none', hair: 'tied', beard: true, tilak: 'vibhuti' }),
   indra: () => createHumanoid({ skin: [235, 200, 150], garment: [230, 230, 240], crown: 'tall', hair: 'tied', tilak: 'kumkum' }),
-  deivanai: () => createHumanoid({ skin: [228, 175, 120], garment: [200, 30, 90], upperGarment: [240, 190, 40], crown: 'gold', hair: 'long', female: true, tilak: 'kumkum' }),
-  valli: () => createHumanoid({ skin: [170, 110, 70], garment: [60, 130, 60], upperGarment: [230, 120, 30], crown: 'none', hair: 'long', female: true, tilak: 'kumkum' }),
+  deivanai: () => modelOr('deivanai', (m) => createHumanoid({ ...m, skin: [228, 175, 120], garment: [200, 30, 90], upperGarment: [240, 190, 40], crown: 'gold', hair: 'long', female: true, tilak: 'kumkum' })),
+  valli: () => modelOr('valli', (m) => createHumanoid({ ...m, skin: [170, 110, 70], garment: [60, 130, 60], upperGarment: [230, 120, 30], crown: 'none', hair: 'long', female: true, tilak: 'kumkum' })),
   maiden: (i) => createHumanoid({ skin: [226, 172, 116], garment: [[220, 60, 60], [60, 120, 200], [230, 170, 30], [140, 60, 180], [40, 150, 90], [230, 100, 40]][i % 6], crown: 'none', hair: 'long', female: true, tilak: 'kumkum', jewelry: true }),
-  asura: (variant = 0) => createHumanoid({ skin: [[90, 40, 40], [50, 60, 70], [70, 30, 60]][variant % 3], garment: [40, 25, 20], crown: 'dark', hair: 'wild', tusks: true, horns: true, size: 1.25, muscles: 1.35, tilak: 'none', jewelry: false }),
-  surapadman: () => createHumanoid({ skin: [110, 30, 30], garment: [30, 10, 10], crown: 'dark', hair: 'wild', tusks: true, horns: true, size: 2.6, muscles: 1.5, tilak: 'none', arms: 3, jewelry: false }),
+  asura: (variant = 0) => modelOr('asura', (m) => createHumanoid({ ...m, skin: [[90, 40, 40], [50, 60, 70], [70, 30, 60]][variant % 3], garment: [40, 25, 20], crown: 'dark', hair: 'wild', tusks: true, horns: true, size: 1.25, muscles: 1.35, tilak: 'none', jewelry: false })),
+  surapadman: () => modelOr('surapadman', (m) => createHumanoid({ ...m, skin: [110, 30, 30], garment: [30, 10, 10], crown: 'dark', hair: 'wild', tusks: true, horns: true, size: 2.6, muscles: 1.5, tilak: 'none', arms: 3, jewelry: false })),
   simhamukha: () => createHumanoid({ skin: [180, 120, 40], garment: [60, 20, 10], crown: 'dark', hair: 'wild', tusks: true, size: 1.9, muscles: 1.5, tilak: 'none', jewelry: false }),
   tarakasura: () => createHumanoid({ skin: [40, 50, 90], garment: [20, 20, 40], crown: 'dark', hair: 'wild', horns: true, size: 1.9, muscles: 1.5, tilak: 'none', jewelry: false }),
 };
