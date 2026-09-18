@@ -9,9 +9,9 @@ Built with [Three.js](https://threejs.org) and physically-based rendering: ACES 
 No build step. Serve the folder with any static file server and open `index.html`:
 
 ```bash
-npm start            # python http.server on http://127.0.0.1:8080
-# or
-npx serve .
+npm start            # node static server (npx serve) on http://localhost:8080
+# or, with Python installed
+npm run start:py
 ```
 
 Then open <http://127.0.0.1:8080>. A WebGL 2 capable browser is required (Chrome, Edge, Firefox, Safari 16+).
