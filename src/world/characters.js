@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import * as TX from '../engine/textures.js';
 import { hasModel, createModelRig, faceRef } from './models.js';
+import { createHead } from './heads.js';
 
 const MAT = {
   gold: () => new THREE.MeshPhysicalMaterial({ map: TX.goldTexture(), color: 0xffd76a, metalness: 1, roughness: 0.22, clearcoat: 0.8, clearcoatRoughness: 0.2 }),
@@ -97,17 +98,13 @@ export function createHumanoid(opts = {}) {
       for (const s of [-1, 1]) { mesh(new THREE.SphereGeometry(0.035 * S, 8, 8), MAT.pupil(), f, [s * 0.11 * S, 0.24 * S, 0.24 * S]); }
       return f;
     }
-    const h = mesh(new THREE.SphereGeometry(0.17 * S, 20, 16), skin, f, [0, 0.14 * S, 0]);
-    h.scale.set(0.92, 1.08, 0.95);
-    // eyes
-    for (const s of [-1, 1]) {
-      const e = mesh(new THREE.SphereGeometry(0.03 * S, 10, 8), MAT.eye(), f, [s * 0.06 * S, 0.16 * S, 0.145 * S], false); e.scale.set(1.4, 0.9, 0.6);
-      mesh(new THREE.SphereGeometry(0.014 * S, 8, 8), MAT.pupil(), f, [s * 0.06 * S, 0.16 * S, 0.165 * S], false);
-      const brow = mesh(new THREE.BoxGeometry(0.07 * S, 0.012 * S, 0.02 * S), hair, f, [s * 0.06 * S, 0.2 * S, 0.15 * S], false); brow.rotation.z = s * -0.25;
-    }
-    // nose & lips
-    mesh(new THREE.ConeGeometry(0.02 * S, 0.06 * S, 6), skin, f, [0, 0.13 * S, 0.17 * S], false).rotation.x = Math.PI / 2;
-    mesh(new THREE.TorusGeometry(0.03 * S, 0.008 * S, 6, 12, Math.PI), new THREE.MeshStandardMaterial({ color: 0x8c3a2e }), f, [0, 0.085 * S, 0.155 * S], false).rotation.set(Math.PI, 0, 0);
+    // sculpted head with facial anatomy (see heads.js)
+    const sculpt = createHead(0.165 * S, {
+      smooth: !!o.faceRef, skin: o.skin, female: o.female, asura: o.asura || o.tusks || o.horns, beard: o.beard, moustache: !o.female && !o.beard && o.crown === 'dark',
+      tilak: o.tilak, thirdEye: o.thirdEye, tusks: o.tusks, horns: o.horns, hair: o.hair, eyeGold: !!(o.tusks || o.horns),
+    });
+    sculpt.group.position.set(0, 0.14 * S, 0); f.add(sculpt.group);
+    f.userData.eyes = sculpt.eyes;
     // reference photo projected as a soft oval decal (interim realism upgrade)
     if (o.faceRef) {
       const c = document.createElement('canvas'); c.width = c.height = 512;
@@ -128,15 +125,6 @@ export function createHumanoid(opts = {}) {
         return f;
       }
     }
-    // forehead marks
-    if (o.tilak === 'vibhuti') for (let i = 0; i < 3; i++) mesh(new THREE.BoxGeometry(0.11 * S, 0.008 * S, 0.01 * S), new THREE.MeshStandardMaterial({ color: 0xf5f0e0 }), f, [0, (0.21 + i * 0.018) * S, 0.163 * S], false);
-    if (o.tilak === 'kumkum' || o.tilak === 'vibhuti') mesh(new THREE.SphereGeometry(0.012 * S, 6, 6), new THREE.MeshStandardMaterial({ color: 0xd11f1f, emissive: 0x500000 }), f, [0, 0.205 * S, 0.165 * S], false);
-    if (o.thirdEye) { const te = mesh(new THREE.SphereGeometry(0.02 * S, 8, 8), new THREE.MeshStandardMaterial({ color: 0xfff1a0, emissive: 0xff8000, emissiveIntensity: 1.5 }), f, [0, 0.235 * S, 0.15 * S], false); te.scale.set(1, 1.5, 0.5); }
-    if (o.tusks) for (const s of [-1, 1]) { const t = mesh(new THREE.ConeGeometry(0.014 * S, 0.06 * S, 6), MAT.eye(), f, [s * 0.05 * S, 0.06 * S, 0.14 * S], false); }
-    if (o.horns) for (const s of [-1, 1]) { const hn = mesh(new THREE.ConeGeometry(0.03 * S, 0.22 * S, 8), new THREE.MeshStandardMaterial({ color: 0x2a1c14, roughness: 0.5 }), f, [s * 0.11 * S, 0.3 * S, 0], false); hn.rotation.z = s * -0.5; }
-    if (o.beard) { const b = mesh(new THREE.SphereGeometry(0.1 * S, 10, 8), MAT.eye(), f, [0, 0.03 * S, 0.1 * S], false); b.scale.set(1, 1.3, 0.6); b.material = new THREE.MeshStandardMaterial({ color: 0xe8e2d8 }); }
-    // ear jewels
-    for (const s of [-1, 1]) mesh(new THREE.TorusGeometry(0.025 * S, 0.006 * S, 6, 12), gold, f, [s * 0.16 * S, 0.12 * S, 0], false);
     return f;
   };
 
@@ -144,14 +132,14 @@ export function createHumanoid(opts = {}) {
   else buildFace(head, 0);
 
   // hair / crown
-  if (o.hair === 'tied' || o.hair === 'jata') {
+  if (o.elephantHead && (o.hair === 'tied' || o.hair === 'jata')) {
     const bun = mesh(new THREE.SphereGeometry(0.19 * S, 16, 12), hair, head, [0, 0.19 * S, -0.03 * S]); bun.scale.set(0.95, 0.9, 0.95);
     if (o.hair === 'jata') { const jata = mesh(new THREE.ConeGeometry(0.16 * S, 0.4 * S, 10), hair, head, [0, 0.45 * S, -0.02 * S]); if (o.moon) { const mo = mesh(new THREE.TorusGeometry(0.06 * S, 0.015 * S, 6, 16, Math.PI), MAT.eye(), head, [0.12 * S, 0.5 * S, 0.05 * S], false); mo.material = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xaaccff, emissiveIntensity: 1 }); mo.rotation.z = -0.6; } }
     else { const bun2 = mesh(new THREE.SphereGeometry(0.1 * S, 12, 10), hair, head, [0, 0.35 * S, -0.06 * S]); }
-  } else if (o.hair === 'long') {
+  } else if (o.elephantHead && o.hair === 'long') {
     const bun = mesh(new THREE.SphereGeometry(0.19 * S, 16, 12), hair, head, [0, 0.19 * S, -0.03 * S]);
     const fall = mesh(new THREE.CapsuleGeometry(0.1 * S, 0.5 * S, 4, 10), hair, head, [0, -0.15 * S, -0.16 * S]);
-  } else if (o.hair === 'wild') {
+  } else if (o.elephantHead && o.hair === 'wild') {
     for (let i = 0; i < 7; i++) { const sp = mesh(new THREE.ConeGeometry(0.05 * S, 0.3 * S, 6), hair, head, [Math.cos(i) * 0.12 * S, 0.3 * S, Math.sin(i) * 0.1 * S - 0.03 * S]); sp.rotation.set(Math.sin(i) * 0.6, 0, Math.cos(i) * 0.6); }
     mesh(new THREE.SphereGeometry(0.18 * S, 12, 10), hair, head, [0, 0.2 * S, -0.03 * S]);
   }
@@ -164,7 +152,18 @@ export function createHumanoid(opts = {}) {
     const cr = mesh(new THREE.CylinderGeometry(0.14 * S, 0.18 * S, 0.3 * S, 6), new THREE.MeshStandardMaterial({ color: 0x3b2a1e, metalness: 0.7, roughness: 0.5 }), head, [0, 0.4 * S, 0]);
     for (let i = 0; i < 6; i++) { const sp = mesh(new THREE.ConeGeometry(0.03 * S, 0.18 * S, 5), cr.material, head, [Math.cos(i / 6 * Math.PI * 2) * 0.15 * S, 0.6 * S, Math.sin(i / 6 * Math.PI * 2) * 0.15 * S]); }
   }
-  if (o.blueThroat) mesh(new THREE.CylinderGeometry(0.075 * S, 0.095 * S, 0.1 * S, 10), new THREE.MeshStandardMaterial({ color: 0x2244aa }), neck, [0, 0.03 * S, 0], false);
+  if (o.serpent) {
+    const snake = new THREE.MeshPhysicalMaterial({ color: 0x1d2b4a, roughness: 0.35, clearcoat: 0.6, sheen: 0.5, sheenColor: new THREE.Color(0x4060a0) });
+    const coil = mesh(new THREE.TorusGeometry(0.105 * S, 0.02 * S, 10, 32), snake, neck, [0, 0.0 * S, 0]); coil.rotation.x = Math.PI / 2 + 0.15;
+    const coil2 = mesh(new THREE.TorusGeometry(0.1 * S, 0.018 * S, 10, 32), snake, neck, [0, 0.045 * S, 0]); coil2.rotation.x = Math.PI / 2 + 0.1;
+    const hood = mesh(new THREE.SphereGeometry(0.028 * S, 10, 8), snake, neck, [0.1 * S, 0.09 * S, 0.06 * S]); hood.scale.set(1, 1.5, 0.5);
+  }
+  if (o.crown === 'tiara') {
+    // fine gold band along the hairline with a hanging tikka
+    mesh(new THREE.SphereGeometry(0.018 * S, 10, 8), MAT.gem(0xff2050), head, [0, 0.215 * S, 0.17 * S], false);
+    for (let i = -3; i <= 3; i++) mesh(new THREE.SphereGeometry(0.01 * S, 8, 6), MAT.gem(i % 2 ? 0xff2050 : 0x20b070), head, [Math.sin(i * 0.28) * 0.165 * S, 0.3 * S - Math.abs(i) * 0.01 * S, Math.cos(i * 0.28) * 0.155 * S], false);
+  }
+  if (o.blueThroat) mesh(new THREE.CylinderGeometry(0.075 * S, 0.095 * S, 0.1 * S, 10), new THREE.MeshStandardMaterial({ color: 0x2c3c66, roughness: 0.6 }), neck, [0, 0.03 * S, 0], false);
 
   // jewelry
   if (o.jewelry) {
@@ -281,13 +280,13 @@ const modelOr = (name, fallback, size = 1, opts = {}) => {
 };
 
 export const Characters = {
-  murugan: (extra = {}) => modelOr('murugan', (m) => createHumanoid({ skin: [236, 186, 110], garment: [190, 22, 22], crown: 'tall', hair: 'tied', tilak: 'vibhuti', muscles: 1.05, ...m, ...extra })),
+  murugan: (extra = {}) => modelOr('murugan', (m) => createHumanoid({ skin: [242, 198, 104], garment: [190, 22, 22], crown: 'tall', hair: 'tied', tilak: 'vibhuti', muscles: 1.05, ...m, ...extra })),
   muruganChild: () => createHumanoid({ skin: [240, 195, 120], garment: [200, 40, 40], crown: 'gold', hair: 'tied', size: 0.62, muscles: 0.9 }),
   shanmukha: () => createHumanoid({ skin: [236, 186, 110], garment: [190, 22, 22], crown: 'tall', hair: 'tied', arms: 6, muscles: 1.05 }),
-  parvati: () => modelOr('parvati', (m) => createHumanoid({ ...m, skin: [225, 165, 110], garment: [30, 140, 60], upperGarment: [200, 30, 60], crown: 'gold', hair: 'long', female: true, tilak: 'kumkum' })),
-  shiva: () => modelOr('shiva', (m) => createHumanoid({ ...m, skin: [200, 205, 215], garment: [190, 120, 50], crown: 'none', hair: 'jata', thirdEye: true, blueThroat: true, moon: true, muscles: 1.15, tilak: 'vibhuti' })),
+  parvati: () => modelOr('parvati', (m) => createHumanoid({ ...m, skin: [228, 178, 128], garment: [186, 32, 42], upperGarment: [34, 112, 64], crown: 'tiara', hair: 'long', female: true, tilak: 'kumkum' })),
+  shiva: () => modelOr('shiva', (m) => createHumanoid({ ...m, skin: [168, 184, 206], garment: [190, 120, 50], crown: 'none', hair: 'jata', thirdEye: true, blueThroat: true, serpent: true, moon: true, muscles: 1.15, tilak: 'vibhuti' })),
   brahma: () => modelOr('brahma', (m) => createHumanoid({ ...m, skin: [230, 190, 140], garment: [240, 220, 190], crown: 'gold', hair: 'tied', beard: true, fourFaces: true, arms: 2 })),
-  ganesha: () => modelOr('ganesha', (m) => createHumanoid({ ...m, skin: [225, 170, 110], garment: [220, 160, 30], crown: 'gold', hair: 'none', elephantHead: true, muscles: 1.45, size: 0.95, tilak: 'none' })),
+  ganesha: () => modelOr('ganesha', (m) => createHumanoid({ ...m, skin: [240, 184, 150], garment: [236, 140, 30], upperGarment: [30, 120, 62], crown: 'gold', hair: 'none', elephantHead: true, muscles: 1.45, size: 0.95, tilak: 'kumkum' })),
   narada: () => createHumanoid({ skin: [230, 200, 150], garment: [250, 245, 230], crown: 'none', hair: 'tied', beard: true, tilak: 'vibhuti' }),
   indra: () => createHumanoid({ skin: [235, 200, 150], garment: [230, 230, 240], crown: 'tall', hair: 'tied', tilak: 'kumkum' }),
   deivanai: () => modelOr('deivanai', (m) => createHumanoid({ ...m, skin: [228, 175, 120], garment: [200, 30, 90], upperGarment: [240, 190, 40], crown: 'gold', hair: 'long', female: true, tilak: 'kumkum' })),

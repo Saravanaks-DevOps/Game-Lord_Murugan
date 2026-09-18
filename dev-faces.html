@@ -1,0 +1,25 @@
+<!DOCTYPE html><html><head><style>body{margin:0;background:#111}</style><script type="importmap">{"imports":{"three":"./vendor/three/three.module.js","three/addons/":"./vendor/three/addons/"}}</script></head><body><canvas id="c"></canvas><script type="module">
+import * as THREE from 'three';
+import { Characters } from './src/world/characters.js';
+import { createSky } from './src/world/environment.js';
+const r = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true }); r.setSize(1280, 720); r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.shadowMap.enabled = true;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1a1612);
+createSky(scene, r, { elevation: 30, azimuth: 160, exposure: 1.0 }); scene.children.forEach((o) => { if (o.isMesh && o.material.uniforms) o.visible = false; });
+const key = new THREE.DirectionalLight(0xfff0e0, 3); key.position.set(3, 5, 6); key.castShadow = true; scene.add(key);
+const fill = new THREE.DirectionalLight(0xa0c0ff, 1); fill.position.set(-5, 2, 3); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffd0a0, 2); rim.position.set(0, 4, -6); scene.add(rim);
+scene.add(new THREE.HemisphereLight(0x8090b0, 0x302010, 0.6));
+const who = (new URLSearchParams(location.search).get('who') || 'murugan,parvati,shiva,valli,asura,brahma').split(',');
+who.forEach((n, i) => {
+  const rig = n === 'asura' ? Characters.asura(0) : Characters[n]();
+  const S = rig.opts.size;
+  rig.group.position.set((i - (who.length - 1) / 2) * 0.62, -0.9 * S * 2.0 + 0.9 * S * 0, 0);
+  // camera looks at head height; shift each so heads line up
+  rig.group.position.y = -1.0 * S - 0.9 * S - 0.12 * S + 0.1;
+  rig.animate(0, 'idle');
+  scene.add(rig.group);
+});
+const cam = new THREE.PerspectiveCamera(28, 1280 / 720, 0.05, 50); cam.position.set(0, 0.15, Number(new URLSearchParams(location.search).get('z') || 3.4)); cam.lookAt(0, 0.05, 0);
+r.render(scene, cam);
+window.__done = true;
+</script></body></html>

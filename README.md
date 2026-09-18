@@ -56,6 +56,9 @@ src/engine/textures.js     procedural canvas textures and normal maps
 src/engine/noise.js        simplex noise / fBm
 src/world/environment.js   sky, lighting, terrain, water, forests, grass, temples, lamps, particles
 src/world/characters.js    rigged procedural deities, asuras, peacock, rooster, the Vel
+src/world/heads.js         sculpted procedural heads: skull, eyes, brows, nose, lips, ears, hair, skin
+src/world/models.js        optional real GLB characters (assets/characters/) and face references
+dev-faces.html             character close-up viewer for tuning faces (?who=murugan,parvati&z=1.6)
 src/chapters/ch*.js        the six chapters
 vendor/three/              Three.js r170 (MIT) and the addons used, vendored for offline play
 scripts/smoke.mjs          headless Playwright smoke test that loads every chapter
